@@ -109,6 +109,7 @@ class Game extends React.Component {
   }
 
   jumpTo(step) {
+    step = Math.min(this.state.history.length - 1, Math.max(0, step));
     this.setState({
       stepNumber: step,
       xIsNext: step % 2 === 0,
@@ -177,6 +178,15 @@ class Game extends React.Component {
               {order}
             </button>
           </div>
+          <div>
+            <button onClick={() => this.jumpTo(this.state.stepNumber - 1)}>
+              Undo
+            </button>
+            <button onClick={() => this.jumpTo(this.state.stepNumber + 1)}>
+              Redo
+            </button>
+          </div>
+
           <ol>{moves}</ol>
         </div>
       </div>
@@ -195,23 +205,6 @@ function calculateWinner(squares) {
 
   let winner = null;
   let winLines = [];
-  // const lines = [
-  //   [0, 1, 2],
-  //   [3, 4, 5],
-  //   [6, 7, 8],
-  //   [0, 3, 6],
-  //   [1, 4, 7],
-  //   [2, 5, 8],
-  //   [0, 4, 8],
-  //   [2, 4, 6],
-  // ];
-  // for (let i = 0; i < lines.length; i++) {
-  //   const [a, b, c] = lines[i];
-  //   if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-  //     winner = squares[a];
-  //     winLines = winLines.concat(lines[i]);
-  //   }
-  // }
 
   /* 縦横揃った場合を調べる */
   let isAlignHorizontal = Array(col).fill(true);
