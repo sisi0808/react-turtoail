@@ -33,8 +33,8 @@ class Board extends React.Component {
 
   createSquares() {
     let squares = [];
-    const col = 3;
-    const row = 3;
+    const col = 5;
+    const row = 5;
     for (let i = 0; i < col; i++) {
       let rows = [];
       for (let j = 0; j < row; j++) {
@@ -60,14 +60,14 @@ class Game extends React.Component {
     this.state = {
       history: [
         {
-          // squares: Array(3)
-          //   .fill()
-          //   .map(() => Array(3).fill(null)),
-          squares: [
-            [null, null, null],
-            [null, null, null],
-            [null, null, null],
-          ],
+          squares: Array(5)
+            .fill()
+            .map(() => Array(5).fill(null)),
+          // squares: [
+          //   [null, null, null],
+          //   [null, null, null],
+          //   [null, null, null],
+          // ],
           col: null,
           row: null,
         },
@@ -190,8 +190,8 @@ const root = ReactDOMClient.createRoot(document.getElementById("root"));
 root.render(<Game />);
 
 function calculateWinner(squares) {
-  const row = 3;
-  const col = 3;
+  const row = 5;
+  const col = 5;
 
   let winner = null;
   let winLines = [];
