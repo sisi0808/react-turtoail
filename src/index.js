@@ -33,8 +33,8 @@ class Board extends React.Component {
 
   createSquares() {
     let squares = [];
-    const col = 5;
-    const row = 5;
+    const col = 19;
+    const row = 19;
     for (let i = 0; i < col; i++) {
       let rows = [];
       for (let j = 0; j < row; j++) {
@@ -60,9 +60,9 @@ class Game extends React.Component {
     this.state = {
       history: [
         {
-          squares: Array(5)
+          squares: Array(19)
             .fill()
-            .map(() => Array(5).fill(null)),
+            .map(() => Array(19).fill(null)),
           // squares: [
           //   [null, null, null],
           //   [null, null, null],
@@ -200,80 +200,102 @@ const root = ReactDOMClient.createRoot(document.getElementById("root"));
 root.render(<Game />);
 
 function calculateWinner(squares) {
-  const row = 5;
-  const col = 5;
+  const row = 19;
+  const col = 19;
+
+  const winLinesNum = 5;
 
   let winner = null;
   let winLines = [];
 
-  /* 縦横揃った場合を調べる */
-  let isAlignHorizontal = Array(col).fill(true);
-  let isAlignVertical = Array(row).fill(true);
+  /* 縦横斜めを一度に判定 */
   for (let i = 0; i < col; i++) {
     for (let j = 0; j < row; j++) {
-      /* 横のラインが揃った場合 */
-      if (squares[i][j] == null || squares[i][j] !== squares[i][0])
-        isAlignHorizontal[i] = false;
-      /* 縦のラインが揃った場合 */
-      if (squares[i][j] == null || squares[i][j] !== squares[0][j])
-        isAlignVertical[j] = false;
+      if (squares[i][j] === null) continue;
+      /* 右判定　*/
+      if (j <= row - winLinesNum) {
+        let isAlignHorizontal = true;
+        for (let jj = 0; jj < winLinesNum; jj++) {
+          if (
+            squares[i][j + jj] === null ||
+            squares[i][j + jj] !== squares[i][j]
+          ) {
+            isAlignHorizontal = false;
+          }
+        }
+        if (isAlignHorizontal) {
+          winner = squares[i][j];
+          winLines = winLines.concat(
+            Array(winLinesNum)
+              .fill(null)
+              .map((_, idx) => [i, j + idx])
+          );
+        }
+      }
+
+      /* 下判定　*/
+      if (i <= col - winLinesNum) {
+        let isAlignVertical = true;
+        for (let ii = 0; ii < winLinesNum; ii++) {
+          if (
+            squares[i + ii][j] === null ||
+            squares[i + ii][j] !== squares[i][j]
+          ) {
+            isAlignVertical = false;
+          }
+        }
+        if (isAlignVertical) {
+          winner = squares[i][j];
+          winLines = winLines.concat(
+            Array(winLinesNum)
+              .fill(null)
+              .map((_, idx) => [i + idx, j])
+          );
+        }
+      }
+
+      /* 右下判定　*/
+      if (i <= col - winLinesNum && j <= row - winLinesNum) {
+        let isAlignDiagonal = true;
+        for (let ii = 0; ii < winLinesNum; ii++) {
+          if (
+            squares[i + ii][j + ii] === null ||
+            squares[i + ii][j + ii] !== squares[i][j]
+          ) {
+            isAlignDiagonal = false;
+          }
+        }
+        if (isAlignDiagonal) {
+          winner = squares[i][j];
+          winLines = winLines.concat(
+            Array(winLinesNum)
+              .fill(null)
+              .map((_, idx) => [i + idx, j + idx])
+          );
+        }
+      }
+
+      /* 左下判定　*/
+      if (i <= col - winLinesNum && j > winLinesNum) {
+        let isAlignDiagonal = true;
+        for (let ii = 0; ii < winLinesNum; ii++) {
+          if (
+            squares[i + ii][j - ii] === null ||
+            squares[i + ii][j - ii] !== squares[i][j]
+          ) {
+            isAlignDiagonal = false;
+          }
+        }
+        if (isAlignDiagonal) {
+          winner = squares[i][j];
+          winLines = winLines.concat(
+            Array(winLinesNum)
+              .fill(null)
+              .map((_, idx) => [i + idx, j - idx])
+          );
+        }
+      }
     }
-  }
-
-  /* 斜めに揃った場合 */
-  let isAlignDiagonal = Array(2).fill(true);
-  for (let i = 0; i < col; i++) {
-    /* 左下-右上のラインがに揃った場合 */
-    if (squares[i][i] == null || squares[i][i] !== squares[0][0])
-      isAlignDiagonal[0] = false;
-    /* 右下-左上のラインがに揃った場合 */
-    if (
-      squares[i][row - i - 1] == null ||
-      squares[i][row - i - 1] !== squares[0][row - 1]
-    )
-      isAlignDiagonal[1] = false;
-  }
-
-  /* 横に揃った場合 */
-  for (let i = 0; i < col; i++) {
-    if (isAlignHorizontal[i]) {
-      winner = squares[i][0];
-      winLines = winLines.concat(
-        Array(row)
-          .fill(null)
-          .map((_, idx) => [i, idx])
-      );
-    }
-  }
-
-  /* 縦に揃った場合 */
-  for (let j = 0; j < row; j++) {
-    if (isAlignVertical[j]) {
-      winner = squares[0][j];
-      winLines = winLines.concat(
-        Array(col)
-          .fill(null)
-          .map((_, idx) => [idx, j])
-      );
-    }
-  }
-
-  /* 斜めに揃った場合 */
-  if (isAlignDiagonal[0]) {
-    winner = squares[0][0];
-    winLines = winLines.concat(
-      Array(col)
-        .fill(null)
-        .map((_, idx) => [idx, idx])
-    );
-  }
-  if (isAlignDiagonal[1]) {
-    winner = squares[0][row - 1];
-    winLines = winLines.concat(
-      Array(col)
-        .fill(null)
-        .map((_, idx) => [idx, row - idx - 1])
-    );
   }
 
   if (!squares.some((squares2) => squares2.includes(null)) && winner === null)
