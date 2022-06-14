@@ -10,7 +10,7 @@ type Position = {
   col: number | null;
   row: number | null;
 };
-type SquaresType = SquareState[];
+type SquaresType = SquareState[][];
 type SquareProps = {
   value: SquareState;
   onClick: () => void;
@@ -18,8 +18,8 @@ type SquareProps = {
 };
 type BoardProps = {
   squares: SquaresType;
-  onClick: (i: number) => void;
-  winLines: number[];
+  onClick: (i: number, j: number) => void;
+  winLines: number[][];
 };
 type History = {
   squares: SquaresType;
@@ -28,29 +28,107 @@ type History = {
 
 /* --------------Type-------------- */
 
-const calculateWinner = (squares: SquaresType): [WinnerState, number[]] => {
-  const lines = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6],
-  ];
+const calculateWinner = (squares: SquaresType): [WinnerState, number[][]] => {
+  const col = 19;
+  const row = 19;
+
+  const winLinesNum = 5;
 
   let winner: WinnerState = null;
-  let winLines: number[] = [];
+  let winLines: number[][] = [];
 
-  for (let i = 0; i < lines.length; i++) {
-    const [a, b, c] = lines[i];
-    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      winner = squares[a];
-      winLines = winLines.concat(lines[i]);
+  /* 縦横斜めを一度に判定 */
+  for (let i = 0; i < col; i++) {
+    for (let j = 0; j < row; j++) {
+      if (squares[i][j] === null) continue;
+      /* 右判定　*/
+      if (j <= row - winLinesNum) {
+        let isAlignHorizontal = true;
+        for (let jj = 0; jj < winLinesNum; jj++) {
+          if (
+            squares[i][j + jj] === null ||
+            squares[i][j + jj] !== squares[i][j]
+          ) {
+            isAlignHorizontal = false;
+          }
+        }
+        if (isAlignHorizontal) {
+          winner = squares[i][j];
+          winLines = winLines.concat(
+            Array(winLinesNum)
+              .fill(null)
+              .map((_, idx) => [i, j + idx])
+          );
+        }
+      }
+
+      /* 下判定　*/
+      if (i <= col - winLinesNum) {
+        let isAlignVertical = true;
+        for (let ii = 0; ii < winLinesNum; ii++) {
+          if (
+            squares[i + ii][j] === null ||
+            squares[i + ii][j] !== squares[i][j]
+          ) {
+            isAlignVertical = false;
+          }
+        }
+        if (isAlignVertical) {
+          winner = squares[i][j];
+          winLines = winLines.concat(
+            Array(winLinesNum)
+              .fill(null)
+              .map((_, idx) => [i + idx, j])
+          );
+        }
+      }
+
+      /* 右下判定　*/
+      if (i <= col - winLinesNum && j <= row - winLinesNum) {
+        let isAlignDiagonal = true;
+        for (let ii = 0; ii < winLinesNum; ii++) {
+          if (
+            squares[i + ii][j + ii] === null ||
+            squares[i + ii][j + ii] !== squares[i][j]
+          ) {
+            isAlignDiagonal = false;
+          }
+        }
+        if (isAlignDiagonal) {
+          winner = squares[i][j];
+          winLines = winLines.concat(
+            Array(winLinesNum)
+              .fill(null)
+              .map((_, idx) => [i + idx, j + idx])
+          );
+        }
+      }
+
+      /* 左下判定　*/
+      if (i <= col - winLinesNum && j > winLinesNum) {
+        let isAlignDiagonal = true;
+        for (let ii = 0; ii < winLinesNum; ii++) {
+          if (
+            squares[i + ii][j - ii] === null ||
+            squares[i + ii][j - ii] !== squares[i][j]
+          ) {
+            isAlignDiagonal = false;
+          }
+        }
+        if (isAlignDiagonal) {
+          winner = squares[i][j];
+          winLines = winLines.concat(
+            Array(winLinesNum)
+              .fill(null)
+              .map((_, idx) => [i + idx, j - idx])
+          );
+        }
+      }
     }
   }
-  if (!squares.includes(null) && winner === null) return ["Draw", winLines];
+
+  if (!squares.some((squares2) => squares2.includes(null)) && winner === null)
+    return ["Draw", winLines];
   return [winner, winLines];
 };
 
@@ -67,24 +145,27 @@ const Square: React.VFC<SquareProps> = (props) => {
 
 const Board: React.VFC<BoardProps> = (props) => {
   // class Board extends React.Component {
-  const renderSquare = (i: number) => {
+  const renderSquare = (i: number, j: number) => {
     return (
       <Square
-        value={props.squares[i]}
-        onClick={() => props.onClick(i)}
-        isHilight={props.winLines.includes(i)}
+        value={props.squares[i][j]}
+        onClick={() => props.onClick(i, j)}
+        key={`Square-(${i}, ${j})`}
+        isHilight={props.winLines.some((wl) => {
+          return i === wl[0] && j === wl[1];
+        })}
       />
     );
   };
 
   const createSquares = () => {
     let squares = [];
-    const col = 3;
-    const row = 3;
+    const col = 19;
+    const row = 19;
     for (let i = 0; i < col; i++) {
       let rows = [];
       for (let j = 0; j < row; j++) {
-        rows.push(renderSquare(i * 3 + j));
+        rows.push(renderSquare(i, j));
       }
       squares.push(
         <div className="board-row" key={"rows" + i.toString()}>
@@ -101,7 +182,9 @@ const Board: React.VFC<BoardProps> = (props) => {
 const Game: React.VFC = () => {
   const [history, setHistory] = useState<History[]>([
     {
-      squares: Array(9).fill(null),
+      squares: Array(19)
+        .fill(null)
+        .map(() => Array(19).fill(null)),
       position: {
         col: null,
         row: null,
@@ -112,18 +195,19 @@ const Game: React.VFC = () => {
   const [xIsNext, setXisNext] = useState(true);
   const [asending, setAscending] = useState(true);
 
-  const handleClick = (i: number) => {
+  const handleClick = (i: number, j: number) => {
     const historyCurrent = history.slice(0, stepNumber + 1);
     const current = history[historyCurrent.length - 1];
-    const squares = [...current.squares];
-    if (calculateWinner(squares)[0] || squares[i]) {
+    const squares = current.squares.map((squares2) => squares2.slice()).slice();
+
+    if (calculateWinner(squares)[0] || squares[i][j]) {
       return;
     }
-    squares[i] = xIsNext ? "X" : "O";
+    squares[i][j] = xIsNext ? "X" : "O";
 
     setHistory([
       ...historyCurrent,
-      { squares: squares, position: { col: i % 3, row: Math.ceil(i / 3) } },
+      { squares: squares, position: { col: i, row: j } },
     ]);
     setStepNumber(historyCurrent.length);
     setXisNext(!xIsNext);
@@ -169,7 +253,7 @@ const Game: React.VFC = () => {
       <div className="game-board">
         <Board
           squares={current.squares}
-          onClick={(i) => handleClick(i)}
+          onClick={(i, j) => handleClick(i, j)}
           winLines={winLines}
         />
       </div>
